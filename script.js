@@ -2,14 +2,17 @@ let stimulusTimeout;
 let intervalId;
 let startTime;
 let reactionTime;
+let reactionTimes = [];
 let stimulusShown = false;
 let testStarted = false;
+let csvData = "";
 const stimulus = document.getElementById('stimulus');
 const startButton = document.getElementById('startButton');
 
 startButton.addEventListener('click', function () {
     startButton.style.display = 'none';
     start_stimulus();
+    setTimeout(stop_stimulus, 30000);//time limit set to 30 seconds
 });
 function start_stimulus() {
     stimulusShown = false;
@@ -29,12 +32,26 @@ function start_stimulus() {
         }, 1); // Update the elapsed time every 1 millisecond
     }, delay);
 }
+function stop_stimulus() {
+    clearTimeout(stimulusTimeout);
+    clearInterval(intervalId);
+    startButton.style.display = 'block';
+    stimulusShown = false;
+    testStarted = false;
+    //user?
+    //reaction times
+    csvData += reactionTimes.map(time => time.toString()).join(' ') + ',';
+    reactionTimes = [];
+    //farts and other stuff
+    csvData += '\n';
+}
 document.addEventListener('click', function () {
     if (testStarted) {
         if (stimulusShown) {
             // clearTimeout(stimulusTimeout);
             clearInterval(intervalId);
             reactionTime = Date.now() - startTime;
+            reactionTimes.push(reactionTime);
             //alert(`Your reaction time was ${reactionTime} ms.`);
             stimulusShown = false;
             stimulus.innerHTML = reactionTime; // Clear the stimulus display
@@ -42,3 +59,14 @@ document.addEventListener('click', function () {
         }
     }
 });
+function downloadCSV() {
+    const encodedData = encodeURIComponent(csvData);
+    const dataURI = 'data:text/csv;charset=utf-8,' + encodedData;
+    const link = document.createElement('a');
+    link.setAttribute('href', dataURI);
+    link.setAttribute('download', 'reaction_times.csv');
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
